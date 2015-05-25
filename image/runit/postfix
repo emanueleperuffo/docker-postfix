@@ -4,7 +4,7 @@ set -e
 BOOTSTRAPPED="/etc/postfix/.bootstrapped"
 
 if [ ! -e $BOOTSTRAPPED ]; then
-	cat <<-EOF | /etc/postfix/main.cf
+	cat <<-EOF > /etc/postfix/main.cf
 	queue_directory = /var/spool/postfix
 	data_directory = /var/db/postfix
 	mail_owner = postfix
@@ -12,7 +12,7 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	myhostname = ${MYHOSTNAME}
 	mydomain = ${MYDOMAIN}
 
-	myorigin = $mydomain
+	myorigin = \$mydomain
 	mydestination = localhost
 	mynetworks = ${MYNETWORKS}
 	relay_domains =
@@ -22,33 +22,33 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	mailbox_size_limit = 0
 	inet_interfaces = all
 
-	smtpd_banner = $myhostname ESMTP $mail_name
+	smtpd_banner = \$myhostname ESMTP \$mail_name
 
-	virtual_mailbox_domains = proxy:ldap:$config_directory/ldap_virtual_domains_maps.cf
-	virtual_mailbox_maps = proxy:ldap:$config_directory/ldap_virtual_mailbox_maps.cf
-	virtual_alias_maps = proxy:ldap:$config_directory/ldap_virtual_alias_maps.cf
-	smtpd_sender_login_maps = proxy:ldap:$config_directory/ldap_smtpd_sender_login_maps.cf
+	virtual_mailbox_domains = proxy:ldap:\$config_directory/ldap_virtual_domains_maps.cf
+	virtual_mailbox_maps = proxy:ldap:\$config_directory/ldap_virtual_mailbox_maps.cf
+	virtual_alias_maps = proxy:ldap:\$config_directory/ldap_virtual_alias_maps.cf
+	smtpd_sender_login_maps = proxy:ldap:\$config_directory/ldap_smtpd_sender_login_maps.cf
 
 	virtual_transport = lmtp:inet:${DOVECOT_HOST}:2424
 	smtpd_sender_restrictions = reject_sender_login_mismatch,reject_unknown_sender_domain
 	EOF
 
-	cat <<-EOF | /etc/postfix/master.cf
+	cat <<-EOF > /etc/postfix/master.cf
 	smtp      inet  n       -       n       -       -       smtpd
-		-o content_filter=scan:10.10.10.10:10025
+	  -o content_filter=scan:10.10.10.10:10025
 	submission inet n       -       n       -       -       smtpd
-		-o syslog_name=postfix/submission
-		-o smtpd_tls_wrappermode=no
-		-o smtpd_tls_security_level=encrypt
-		-o smtpd_sasl_auth_enable=yes
-		-o smtpd_client_restrictions=permit_sasl_authenticated,reject
-		-o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
-		-o smtpd_sasl_type=dovecot
-		-o smtpd_sasl_path=inet:${DOVECOT_HOST}:12345
-		-o smtpd_tls_CAfile=/etc/ssl/postfix/${SSL_CA}
-		-o smtpd_tls_cert_file=/etc/ssl/postfix/${SSL_CERT}
-		-o smtpd_tls_key_file=/etc/ssl/postfix/${SSL_KEY}
-		-o smtpd_tls_protocols=!SSLv2,!SSLv3
+	  -o syslog_name=postfix/submission
+	  -o smtpd_tls_wrappermode=no
+	  -o smtpd_tls_security_level=encrypt
+	  -o smtpd_sasl_auth_enable=yes
+	  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+	  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+	  -o smtpd_sasl_type=dovecot
+	  -o smtpd_sasl_path=inet:${DOVECOT_HOST}:12345
+	  -o smtpd_tls_CAfile=/etc/ssl/postfix/${SSL_CA}
+	  -o smtpd_tls_cert_file=/etc/ssl/postfix/${SSL_CERT}
+	  -o smtpd_tls_key_file=/etc/ssl/postfix/${SSL_KEY}
+	  -o smtpd_tls_protocols=!SSLv2,!SSLv3
 	pickup    unix  n       -       -       60      1       pickup
 	cleanup   unix  n       -       -       -       0       cleanup
 	qmgr      unix  n       -       n       300     1       qmgr
@@ -76,22 +76,22 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	scache    unix  -       -       -       -       1       scache
 
 	maildrop  unix  -       n       n       -       -       pipe
-		flags=DRhu user=vmail argv=/usr/bin/maildrop -d ${recipient}
+	  flags=DRhu user=vmail argv=/usr/bin/maildrop -d \${recipient}
 
 	uucp      unix  -       n       n       -       -       pipe
-		flags=Fqhu user=uucp argv=uux -r -n -z -a$sender - $nexthop!rmail ($recipient)
+	  flags=Fqhu user=uucp argv=uux -r -n -z -a\$sender - \$nexthop!rmail (\$recipient)
 	ifmail    unix  -       n       n       -       -       pipe
-		flags=F user=ftn argv=/usr/lib/ifmail/ifmail -r $nexthop ($recipient)
+	  flags=F user=ftn argv=/usr/lib/ifmail/ifmail -r \$nexthop (\$recipient)
 	bsmtp     unix  -       n       n       -       -       pipe
-		flags=Fq. user=bsmtp argv=/usr/lib/bsmtp/bsmtp -t$nexthop -f$sender $recipient
+	  flags=Fq. user=bsmtp argv=/usr/lib/bsmtp/bsmtp -t\$nexthop -f\$sender \$recipient
 	scalemail-backend unix  -       n       n       -       2       pipe
-		flags=R user=scalemail argv=/usr/lib/scalemail/bin/scalemail-store ${nexthop} ${user} ${extension}
+	  flags=R user=scalemail argv=/usr/lib/scalemail/bin/scalemail-store \${nexthop} \${user} \${extension}
 	mailman   unix  -       n       n       -       -       pipe
-		flags=FR user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py
-		${nexthop} ${user}
+	  flags=FR user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py
+	  \${nexthop} \${user}
 	EOF
 
-	cat <<-EOF | ldap_virtual_domains_maps.cf
+	cat <<-EOF > /etc/postfix/ldap_virtual_domains_maps.cf
 	server_host = ldap://${LDAP_HOST}
 	search_base = ${LDAP_SEARCH_BASE}
 	version = 3
@@ -100,7 +100,7 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	result_attribute = mailHost
 	EOF
 
-	cat <<-EOF | ldap_virtual_mailbox_maps.cf
+	cat <<-EOF > /etc/postfix/ldap_virtual_mailbox_maps.cf
 	server_host = ldap://${LDAP_HOST}
 	search_base = ${LDAP_SEARCH_BASE}
 	version = 3
@@ -109,7 +109,7 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	result_attribute = mail
 	EOF
 
-	cat <<-EOF | ldap_virtual_alias_maps.cf
+	cat <<-EOF > /etc/postfix/ldap_virtual_alias_maps.cf
 	server_host = ldap://${LDAP_HOST}
 	search_base = ${LDAP_SEARCH_BASE}
 	version = 3
@@ -118,7 +118,7 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	result_attribute = mail
 	EOF
 
-	cat <<-EOF | ldap_smtpd_sender_login_maps.cf
+	cat <<-EOF > /etc/postfix/ldap_smtpd_sender_login_maps.cf
 	server_host = ldap://${LDAP_HOST}
 	search_base = ${LDAP_SEARCH_BASE}
 	version = 3
@@ -130,4 +130,13 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	touch $BOOTSTRAPPED;
 fi
 
-exec /usr/lib/postfix/master
+daemon_directory=/usr/lib/postfix \
+data_directory=/var/lib/postfix \
+command_directory=/usr/sbin \
+config_directory=/etc/postfix \
+queue_directory=/var/spool/postfix \
+mail_owner=postfix \
+setgid_group=postdrop \
+/etc/postfix/postfix-script check || exit 1
+
+exec /usr/lib/postfix/master -d
