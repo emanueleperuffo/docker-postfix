@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+chmod 600 /etc/ssl/postfix/postfix-key.pem
+
 BOOTSTRAPPED="/etc/postfix/.bootstrapped"
 
 if [ ! -e $BOOTSTRAPPED ]; then
