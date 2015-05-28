@@ -9,12 +9,12 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	data_directory = /var/db/postfix
 	mail_owner = postfix
 
-	myhostname = ${MYHOSTNAME}
-	mydomain = ${MYDOMAIN}
+	myhostname = $MYHOSTNAME
+	mydomain = $MYDOMAIN
 
 	myorigin = \$mydomain
 	mydestination = localhost
-	mynetworks = ${MYNETWORKS}
+	mynetworks = $MYNETWORKS
 	relay_domains =
 	relay_host =
 
@@ -29,26 +29,49 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	virtual_alias_maps = proxy:ldap:\$config_directory/ldap_virtual_alias_maps.cf
 	smtpd_sender_login_maps = proxy:ldap:\$config_directory/ldap_smtpd_sender_login_maps.cf
 
-	virtual_transport = lmtp:inet:${DOVECOT_HOST}:2424
-	smtpd_sender_restrictions = reject_sender_login_mismatch,reject_unknown_sender_domain
+	virtual_transport = lmtp:inet:$DOVECOT_HOST:2424
+
+	# Defaults for smtp and submission
+	smtpd_helo_required = yes
+	smtpd_helo_restrictions = permit_mynetworks,reject_invalid_helo_hostname,reject_non_fqdn_helo_hostname,reject_unknown_helo_hostname,permit
+	smtpd_data_restrictions = reject_unauth_pipelining,permit
+	smtpd_recipient_restrictions = permit_auth_destination,reject
+
+	smtpd_tls_auth_only = yes
+
+	content_filter=clamsmtp:[$CLAMSMTP_HOST]:10025
 	EOF
 
 	cat <<-EOF > /etc/postfix/master.cf
+	# ==========================================================================
+	# service type  private unpriv  chroot  wakeup  maxproc command + args
+	#               (yes)   (yes)   (yes)   (never) (100)
+	# ==========================================================================
 	smtp      inet  n       -       n       -       -       smtpd
-	  -o content_filter=scan:10.10.10.10:10025
+	  -o smtpd_relay_restrictions=defer_unauth_destination,reject
+	  -o smtpd_sender_restrictions=reject_non_fqdn_sender,check_policy_service inet:$POSTGREY_HOST:10023,permit
 	submission inet n       -       n       -       -       smtpd
 	  -o syslog_name=postfix/submission
 	  -o smtpd_tls_wrappermode=no
 	  -o smtpd_tls_security_level=encrypt
 	  -o smtpd_sasl_auth_enable=yes
 	  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-	  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+	  -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
+	  -o smtpd_sender_restrictions=reject_sender_login_mismatch,permit
 	  -o smtpd_sasl_type=dovecot
-	  -o smtpd_sasl_path=inet:${DOVECOT_HOST}:12345
-	  -o smtpd_tls_CAfile=/etc/ssl/postfix/${SSL_CA}
-	  -o smtpd_tls_cert_file=/etc/ssl/postfix/${SSL_CERT}
-	  -o smtpd_tls_key_file=/etc/ssl/postfix/${SSL_KEY}
+	  -o smtpd_sasl_path=inet:$DOVECOT_HOST:12345
+	  -o smtpd_tls_CAfile=/etc/ssl/postfix/postfix-ca.pem
+	  -o smtpd_tls_cert_file=/etc/ssl/postfix/postfix-cert.pem
+	  -o smtpd_tls_key_file=/etc/ssl/postfix/postfix-key.pem
 	  -o smtpd_tls_protocols=!SSLv2,!SSLv3
+	clamsmtp      unix  n       -       n       -       -       smtp
+	  -o smtp_send_xforward_command=yes
+	10026        inet    n       -       n       -       -      smtpd
+	  -o content_filter=spamc
+	spamc unix -     n       n       -       -       pipe
+	  argv=/usr/bin/spamc -f -d $SPAMD_HOST -e /usr/sbin/sendmail -oi -f \${sender} \${recipient}
+	dovecot   unix  -       n       n       -       -       pipe
+
 	pickup    unix  n       -       -       60      1       pickup
 	cleanup   unix  n       -       -       -       0       cleanup
 	qmgr      unix  n       -       n       300     1       qmgr
@@ -92,8 +115,8 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	EOF
 
 	cat <<-EOF > /etc/postfix/ldap_virtual_domains_maps.cf
-	server_host = ldap://${LDAP_HOST}
-	search_base = ${LDAP_SEARCH_BASE}
+	server_host = ldap://$SLAPD_HOST
+	search_base = $SLAPD_SEARCH_BASE
 	version = 3
 	bind = no
 	query_filter = (&(objectclass=inetLocalMailRecipient)(mailHost=%s))
@@ -101,8 +124,8 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	EOF
 
 	cat <<-EOF > /etc/postfix/ldap_virtual_mailbox_maps.cf
-	server_host = ldap://${LDAP_HOST}
-	search_base = ${LDAP_SEARCH_BASE}
+	server_host = ldap://$SLAPD_HOST
+	search_base = $SLAPD_SEARCH_BASE
 	version = 3
 	bind = no
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mail=%s))
@@ -110,8 +133,8 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	EOF
 
 	cat <<-EOF > /etc/postfix/ldap_virtual_alias_maps.cf
-	server_host = ldap://${LDAP_HOST}
-	search_base = ${LDAP_SEARCH_BASE}
+	server_host = ldap://$SLAPD_HOST
+	search_base = $SLAPD_SEARCH_BASE
 	version = 3
 	bind = no
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mailLocalAddress=%s))
@@ -119,8 +142,8 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	EOF
 
 	cat <<-EOF > /etc/postfix/ldap_smtpd_sender_login_maps.cf
-	server_host = ldap://${LDAP_HOST}
-	search_base = ${LDAP_SEARCH_BASE}
+	server_host = ldap://$SLAPD_HOST
+	search_base = $SLAPD_SEARCH_BASE
 	version = 3
 	bind = no
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mailLocalAddress=%s))

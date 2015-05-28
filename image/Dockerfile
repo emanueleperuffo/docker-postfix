@@ -4,15 +4,16 @@ MAINTAINER Emanuele Peruffo <info@emanueleperuffo.com>
 ENV HOME /root
 ADD . /build
 
+ENV DOVECOT_HOST dovecot.example.com
+ENV SLAPD_HOST ldap.example.com
+ENV SPAMD_HOST spamd.example.com
+ENV CLAMSMTP_HOST clamsmtp.example.com
+ENV POSTGREY_HOST postgrey.example.com
+
 ENV MYDOMAIN example.com
 ENV MYHOSTNAME mail.example.com
 ENV MYNETWORKS 127.0.0.0/32
-ENV DOVECOT_HOST dovecot.example.com
-ENV LDAP_HOST ldap.example.com
-ENV LDAP_SEARCH_BASE dc=example,dc=com
-ENV SSL_CA postfix.ca.pem
-ENV SSL_CERT postfix.cert.pem
-ENV SSL_KEY postfix.key.pem
+ENV SLAPD_SEARCH_BASE dc=example,dc=com
 
 RUN /build/prepare.sh && \
 	/build/services.sh && \
@@ -20,6 +21,6 @@ RUN /build/prepare.sh && \
 
 VOLUME ["/etc/postfix", "/var/spool/postfix", "/etc/ssl/postfix"]
 
-EXPOSE 5432
+EXPOSE 25 587 10026
 
 CMD ["/sbin/my_init"]
