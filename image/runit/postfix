@@ -62,9 +62,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	  -o smtpd_sender_restrictions=reject_sender_login_mismatch,permit
 	  -o smtpd_sasl_type=dovecot
 	  -o smtpd_sasl_path=inet:$DOVECOT_HOST:12345
-	  -o smtpd_tls_CAfile=/etc/ssl/postfix/postfix.ca.pem
-	  -o smtpd_tls_cert_file=/etc/ssl/postfix/postfix.cert.pem
-	  -o smtpd_tls_key_file=/etc/ssl/postfix/postfix.key.pem
+	  -o smtpd_tls_CAfile=/etc/ssl/postfix/ca.pem
+	  -o smtpd_tls_cert_file=/etc/ssl/postfix/cert.pem
+	  -o smtpd_tls_key_file=/etc/ssl/postfix/key.pem
 	  -o smtpd_tls_protocols=!SSLv2,!SSLv3
 	clamsmtp      unix  n       -       n       -       -       smtp
 	  -o smtp_send_xforward_command=yes
