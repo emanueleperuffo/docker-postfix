@@ -118,7 +118,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	server_host = ldap://$SLAPD_HOST
 	search_base = $SLAPD_SEARCH_BASE
 	version = 3
-	bind = no
+	bind = yes
+	bind_dn = $SLAPD_DN
+	bind_pw = $SLAPD_DNPASS
 	query_filter = (&(objectclass=inetLocalMailRecipient)(mailHost=%s))
 	result_attribute = mailHost
 	EOF
@@ -127,7 +129,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	server_host = ldap://$SLAPD_HOST
 	search_base = $SLAPD_SEARCH_BASE
 	version = 3
-	bind = no
+	bind = yes
+	bind_dn = $SLAPD_DN
+	bind_pw = $SLAPD_DNPASS
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mail=%s))
 	result_attribute = mail
 	EOF
@@ -136,7 +140,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	server_host = ldap://$SLAPD_HOST
 	search_base = $SLAPD_SEARCH_BASE
 	version = 3
-	bind = no
+	bind = yes
+	bind_dn = $SLAPD_DN
+	bind_pw = $SLAPD_DNPASS
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mailLocalAddress=%s))
 	result_attribute = mail
 	EOF
@@ -145,7 +151,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	server_host = ldap://$SLAPD_HOST
 	search_base = $SLAPD_SEARCH_BASE
 	version = 3
-	bind = no
+	bind = yes
+	bind_dn = $SLAPD_DN
+	bind_pw = $SLAPD_DNPASS
 	query_filter = (&(objectclass=inetOrgPerson)(objectclass=inetLocalMailRecipient)(mailLocalAddress=%s))
 	result_attribute = mail
 	EOF
