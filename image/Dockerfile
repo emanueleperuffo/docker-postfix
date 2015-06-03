@@ -21,7 +21,7 @@ RUN /build/prepare.sh && \
 	/build/services.sh && \
 	/build/cleanup.sh
 
-VOLUME ["/etc/postfix", "/var/spool/postfix", "/etc/ssl/postfix"]
+VOLUME ["/var/spool/postfix", "/etc/ssl/postfix"]
 
 EXPOSE 25 587 10026
 
