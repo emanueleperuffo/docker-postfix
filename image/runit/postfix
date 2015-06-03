@@ -41,7 +41,7 @@ if [ ! -e $BOOTSTRAPPED ]; then
 
 	smtpd_tls_auth_only = yes
 
-	content_filter=clamsmtp:[$CLAMSMTP_HOST]:10025
+	content_filter=clamsmtp:[$CLAMD_HOST]:10025
 	EOF
 
 	cat <<-EOF > /etc/postfix/master.cf

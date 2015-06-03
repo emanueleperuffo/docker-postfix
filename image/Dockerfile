@@ -7,7 +7,7 @@ ADD . /build
 ENV DOVECOT_HOST dovecot.example.com
 ENV SLAPD_HOST ldap.example.com
 ENV SPAMD_HOST spamd.example.com
-ENV CLAMSMTP_HOST clamsmtp.example.com
+ENV CLAMD_HOST clamsmtp.example.com
 ENV POSTGREY_HOST postgrey.example.com
 
 ENV MYDOMAIN example.com
