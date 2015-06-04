@@ -168,6 +168,9 @@ if [ ! -e $BOOTSTRAPPED ]; then
 	setgid_group=postdrop \
 	/etc/postfix/postfix-script check || exit 1
 
+	cp /etc/services /var/spool/postfix/etc/
+	cp /etc/resolv.conf /var/spool/postfix/etc/
+
 	touch $BOOTSTRAPPED
 fi
 
