@@ -5,7 +5,7 @@ ENV HOME /root
 ADD . /build
 
 ENV DOVECOT_HOST dovecot.example.com
-ENV SLAPD_HOST ldap.example.com
+ENV LDAP_HOST ldap.example.com
 ENV SPAMD_HOST spamd.example.com
 ENV CLAMD_HOST clamsmtp.example.com
 ENV POSTGREY_HOST postgrey.example.com
@@ -13,9 +13,9 @@ ENV POSTGREY_HOST postgrey.example.com
 ENV MYDOMAIN example.com
 ENV MYHOSTNAME postfix.example.com
 ENV MYNETWORKS 127.0.0.0/32
-ENV SLAPD_SEARCH_BASE dc=example,dc=com
-ENV SLAPD_DN cn=postfix,dc=example,dc=com
-ENV SLAPD_DNPASS pass
+ENV LDAP_BASE_DN dc=example,dc=com
+ENV LDAP_BIND_DN cn=postfix,dc=example,dc=com
+ENV LDAP_PASS pass
 
 RUN /build/prepare.sh && \
 	/build/services.sh && \
